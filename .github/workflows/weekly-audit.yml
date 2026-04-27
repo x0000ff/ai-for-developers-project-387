@@ -25,27 +25,30 @@ jobs:
         id: weekly
         run: |
           OLDEST=$(git log --since="1 week ago" --format="%H" | tail -1)
+          DELIM_COMMITS=$(openssl rand -hex 8)
+          DELIM_FILES=$(openssl rand -hex 8)
 
           {
-            echo 'commits<<EOF'
+            echo "commits<<${DELIM_COMMITS}"
             git log --since="1 week ago" --no-merges --format="- %s (%an, %ar)" || echo "Коммитов за неделю нет"
-            echo 'EOF'
+            echo "${DELIM_COMMITS}"
           } >> "$GITHUB_OUTPUT"
 
           {
-            echo 'files<<EOF'
+            echo "files<<${DELIM_FILES}"
             if [ -n "$OLDEST" ]; then
               git diff --stat "${OLDEST}^..HEAD" 2>/dev/null || echo "Нет данных"
             else
               echo "Изменений за неделю нет"
             fi
-            echo 'EOF'
+            echo "${DELIM_FILES}"
           } >> "$GITHUB_OUTPUT"
 
           echo "week=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
       - name: Run Lighthouse audit
         id: lighthouse
+        continue-on-error: true
         run: |
           npx --yes lighthouse@12 \
             https://ai-for-developers-production.up.railway.app/ \
@@ -53,35 +56,30 @@ jobs:
             --output=json \
             --output=html \
             --output-path=./lighthouse \
-            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
-            --quiet
+            --chrome-flags="--headless"
 
-          node -e "
-            const r = require('./lighthouse.report.json');
-            const c = r.categories;
-            const a = r.audits;
-            const lines = [
-              'Performance:     ' + Math.round(c.performance.score * 100) + '/100',
-              'Accessibility:   ' + Math.round(c.accessibility.score * 100) + '/100',
-              'Best Practices:  ' + Math.round(c['best-practices'].score * 100) + '/100',
-              'SEO:             ' + Math.round(c.seo.score * 100) + '/100',
-              '',
-              'LCP:             ' + a['largest-contentful-paint'].displayValue,
-              'TBT:             ' + a['total-blocking-time'].displayValue,
-              'CLS:             ' + a['cumulative-layout-shift'].displayValue,
-              'FCP:             ' + a['first-contentful-paint'].displayValue,
-              'Speed Index:     ' + a['speed-index'].displayValue,
-            ];
-            process.stdout.write(lines.join('\n'));
-          " > lighthouse-scores.txt
+          SCORES=$(jq -r '
+            "Performance:    \(.categories.performance.score * 100 | round)/100",
+            "Accessibility:  \(.categories.accessibility.score * 100 | round)/100",
+            "Best Practices: \(.categories["best-practices"].score * 100 | round)/100",
+            "SEO:            \(.categories.seo.score * 100 | round)/100",
+            "",
+            "LCP:            \(.audits["largest-contentful-paint"].displayValue)",
+            "TBT:            \(.audits["total-blocking-time"].displayValue)",
+            "CLS:            \(.audits["cumulative-layout-shift"].displayValue)",
+            "FCP:            \(.audits["first-contentful-paint"].displayValue)",
+            "Speed Index:    \(.audits["speed-index"].displayValue)"
+          ' ./lighthouse.report.json 2>/dev/null || echo "Данные Lighthouse недоступны")
 
+          DELIM=$(openssl rand -hex 8)
           {
-            echo 'scores<<EOF'
-            cat lighthouse-scores.txt
-            echo 'EOF'
+            echo "scores<<${DELIM}"
+            echo "$SCORES"
+            echo "${DELIM}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload Lighthouse report
+        if: steps.lighthouse.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-${{ steps.weekly.outputs.week }}
