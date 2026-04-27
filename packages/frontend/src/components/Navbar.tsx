@@ -65,7 +65,6 @@ export function Navbar() {
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <LanguageSwitcher />
           {!isAdminPage && (
             <Link
               to="/admin"
@@ -90,6 +89,7 @@ export function Navbar() {
               {t('nav.admin')}
             </Link>
           )}
+          <LanguageSwitcher />
         </div>
       </div>
     </nav>
