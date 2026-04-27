@@ -1,5 +1,3 @@
-import { LanguageSwitcher } from './LanguageSwitcher';
-
 export function Footer() {
   return (
     <footer
@@ -23,9 +21,7 @@ export function Footer() {
           justifyContent: 'flex-end',
           height: 48,
         }}
-      >
-        <LanguageSwitcher />
-      </div>
+      />
     </footer>
   );
 }
