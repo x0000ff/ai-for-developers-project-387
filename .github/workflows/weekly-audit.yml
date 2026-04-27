@@ -1,0 +1,80 @@
+name: Weekly Code Audit
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # каждый понедельник в 9:00 UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Collect weekly changes
+        id: weekly
+        run: |
+          OLDEST=$(git log --since="1 week ago" --format="%H" | tail -1)
+
+          {
+            echo 'commits<<EOF'
+            git log --since="1 week ago" --no-merges --format="- %s (%an, %ar)" || echo "Коммитов за неделю нет"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo 'files<<EOF'
+            if [ -n "$OLDEST" ]; then
+              git diff --stat "${OLDEST}^..HEAD" 2>/dev/null || echo "Нет данных"
+            else
+              echo "Изменений за неделю нет"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+          echo "week=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Run OpenCode weekly audit
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: opencode/big-pickle
+          prompt: |
+            Ты — ревьюер кода. Проведи еженедельный аудит репозитория «Book a Call» —
+            сервиса бронирования временных слотов (Fastify + SQLite + React).
+
+            ## Коммиты за неделю
+            ${{ steps.weekly.outputs.commits }}
+
+            ## Изменённые файлы
+            ${{ steps.weekly.outputs.files }}
+
+            ## Что нужно сделать
+            1. Открой и изучи изменённые файлы из репозитория.
+            2. Найди потенциальные проблемы: баги, нарушения паттернов, дублирование,
+               небезопасный код, отсутствие обработки ошибок.
+            3. Создай GitHub Issue с заголовком:
+               "📋 Еженедельный аудит кода — ${{ steps.weekly.outputs.week }}"
+
+               Issue должен содержать:
+               ### Резюме недели
+               Краткое описание сделанного.
+
+               ### Найденные проблемы
+               Таблица: Приоритет | Файл | Описание проблемы
+               (приоритеты: 🔴 высокий / 🟡 средний / 🟢 низкий)
+
+               ### Рекомендации
+               Конкретные шаги по улучшению с указанием файлов и строк.
