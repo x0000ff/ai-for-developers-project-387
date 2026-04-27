@@ -1,0 +1,125 @@
+:root {
+  --bg: #f2ede6;
+  --bg-nav: rgba(242, 237, 230, 0.85);
+  --border: #d9d0c4;
+  --fg: #1c1917;
+  --fg-muted: #78716c;
+  --accent: #c97a1a;
+  --accent-hover: #a86015;
+  --accent-fg: #ffffff;
+  --danger: #b33232;
+  --danger-hover: #8a2828;
+  --font: 'DM Sans', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-btn-outline {
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.nav-btn-outline:hover {
+  background: var(--border) !important;
+}
+
+.nav-btn-accent {
+  transition: background 0.15s ease;
+}
+.nav-btn-accent:hover {
+  background: var(--accent-hover) !important;
+}
+
+.cta-btn {
+  transition:
+    background 0.15s ease,
+    transform 0.1s ease;
+}
+.cta-btn:hover {
+  background: var(--accent-hover) !important;
+}
+.cta-btn:active {
+  transform: scale(0.98);
+}
+
+.feature-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+}
+
+@media (max-width: 480px) {
+  .feature-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.event-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Admin tabs pills */
+.mantine-Tabs-tab {
+  background: transparent !important;
+  color: var(--fg) !important;
+}
+.mantine-Tabs-tab[data-active] {
+  background: var(--accent) !important;
+  color: white !important;
+}
+
+/* Danger button (delete actions) */
+.danger-btn {
+  transition: background 0.15s ease;
+}
+.danger-btn:hover {
+  background: var(--danger-hover) !important;
+}
+
+/* Override Mantine subtle variant hover — replace default blue with neutral gray */
+button[data-variant='subtle']:not([data-color]):hover,
+button[data-variant='subtle'][data-color='gray']:hover {
+  background-color: rgba(28, 25, 23, 0.07) !important;
+}
+
+/* SegmentedControl selected label color */
+.mantine-SegmentedControl-label[data-active] {
+  color: white !important;
+}

@@ -1,0 +1,34 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1775574850987,
+      "tag": "0000_lumpy_leech",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775658313000,
+      "tag": "0001_peaceful_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1744128000000,
+      "tag": "0002_add_bookings_constraints",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1777000000000,
+      "tag": "0003_seed_event_types",
+      "breakpoints": true
+    }
+  ]
+}

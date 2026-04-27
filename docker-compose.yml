@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      - DATABASE_URL=/app/data/app.db
+    volumes:
+      - db_data:/app/data
+
+volumes:
+  db_data:
