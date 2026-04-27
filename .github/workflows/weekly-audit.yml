@@ -7,7 +7,7 @@ on:
 
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       id-token: write
       contents: read
@@ -44,6 +44,50 @@ jobs:
 
           echo "week=$(date -u +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
 
+      - name: Run Lighthouse audit
+        id: lighthouse
+        run: |
+          npx --yes lighthouse@12 \
+            https://ai-for-developers-production.up.railway.app/ \
+            --preset=desktop \
+            --output=json \
+            --output=html \
+            --output-path=./lighthouse \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --quiet
+
+          node -e "
+            const r = require('./lighthouse.report.json');
+            const c = r.categories;
+            const a = r.audits;
+            const lines = [
+              'Performance:     ' + Math.round(c.performance.score * 100) + '/100',
+              'Accessibility:   ' + Math.round(c.accessibility.score * 100) + '/100',
+              'Best Practices:  ' + Math.round(c['best-practices'].score * 100) + '/100',
+              'SEO:             ' + Math.round(c.seo.score * 100) + '/100',
+              '',
+              'LCP:             ' + a['largest-contentful-paint'].displayValue,
+              'TBT:             ' + a['total-blocking-time'].displayValue,
+              'CLS:             ' + a['cumulative-layout-shift'].displayValue,
+              'FCP:             ' + a['first-contentful-paint'].displayValue,
+              'Speed Index:     ' + a['speed-index'].displayValue,
+            ];
+            process.stdout.write(lines.join('\n'));
+          " > lighthouse-scores.txt
+
+          {
+            echo 'scores<<EOF'
+            cat lighthouse-scores.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload Lighthouse report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-${{ steps.weekly.outputs.week }}
+          path: lighthouse.report.html
+          retention-days: 30
+
       - name: Run OpenCode weekly audit
         uses: anomalyco/opencode/github@latest
         env:
@@ -61,6 +105,9 @@ jobs:
             ## Изменённые файлы
             ${{ steps.weekly.outputs.files }}
 
+            ## Lighthouse аудит (production)
+            ${{ steps.lighthouse.outputs.scores }}
+
             ## Что нужно сделать
             1. Открой и изучи изменённые файлы из репозитория.
             2. Найди потенциальные проблемы: баги, нарушения паттернов, дублирование,
@@ -72,7 +119,10 @@ jobs:
                ### Резюме недели
                Краткое описание сделанного.
 
-               ### Найденные проблемы
+               ### Lighthouse
+               Таблица со скорами и Core Web Vitals. Отметь метрики ниже 90 как проблемные.
+
+               ### Найденные проблемы в коде
                Таблица: Приоритет | Файл | Описание проблемы
                (приоритеты: 🔴 высокий / 🟡 средний / 🟢 низкий)
 
