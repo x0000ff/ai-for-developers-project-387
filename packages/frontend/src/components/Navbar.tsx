@@ -2,6 +2,8 @@ import { CalendarDays, ShieldCheck } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+import { LanguageSwitcher } from './LanguageSwitcher';
+
 export function Navbar() {
   const { t } = useTranslation();
   const location = useLocation();
@@ -63,6 +65,7 @@ export function Navbar() {
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <LanguageSwitcher />
           {!isAdminPage && (
             <Link
               to="/admin"
